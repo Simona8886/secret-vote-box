@@ -6,6 +6,14 @@ A community governance voting dApp. Built on **FHEVM (Fully Homomorphic Encrypti
 ![Node](https://img.shields.io/badge/node-%3E%3D20-green.svg)
 ![Solidity](https://img.shields.io/badge/solidity-^0.8.0-orange.svg)
 
+## 🔗 Live Demo
+
+Try it now: [secret-vote-box-r42v.vercel.app](https://secret-vote-box-r42v.vercel.app/)
+
+## 🎥 Demo Video
+
+Watch the full demo: [demo.mp4](https://github.com/Hamiltion23/shield-trade-loop/blob/main/demo.mp4)
+
 ## ✨ Features (Community/DAO)
 
 - 🔒 Privacy-first: during voting, individual choices and the total count are encrypted to prevent trend-following
