@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Lock, Clock, Users, Check } from "lucide-react";
+import { Lock, Clock, Users, Check, Loader2 } from "lucide-react";
 
 interface PollOption {
   id: string;
@@ -143,6 +143,13 @@ const PollCard = ({
           )}
           {/* Reveal button removed by request */}
         </div>
+        {/* Decrypting indicator */}
+        {status === "ended" && !finalized && revealing && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Decrypting results on-chain...</span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
