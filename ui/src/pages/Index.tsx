@@ -9,7 +9,7 @@ import { getAllPolls, getEncryptedVoteCount, hasUserVoted, castVote, type Poll, 
 import { getFHEVMInstance, encryptOptionIndex } from "@/lib/fhevm";
 import { chains } from "@/lib/wagmi";
 import { ethers } from "ethers";
-
+ 
 interface Vote {
   pollId: number;
   optionIndex: number;
@@ -58,10 +58,6 @@ const Index = () => {
       const allPolls = await getAllPolls(provider, chainId || undefined);
       setPolls(allPolls);
       // Load results/finalization status for ended polls
-      if (allPolls.length === 0) {
-        setLoading(false);
-        return;
-      }
       for (const p of allPolls) {
         const now = Date.now();
         const ended = Number(p.expireAt) * 1000 <= now || !p.isActive;
@@ -86,7 +82,6 @@ const Index = () => {
         }
       }
     } catch (error: any) {
-      console.error("Error fetching polls:", error);
       toast({
         variant: "destructive",
         title: "Error loading polls",
@@ -135,7 +130,6 @@ const Index = () => {
           setFinalizedByPoll(prev => ({ ...prev, [pollId]: true }));
           setResultsByPoll(prev => ({ ...prev, [pollId]: { counts, total, percentages } }));
           toast({ title: "Results revealed", description: "Clear results are now available." });
-          // Refresh polls to show updated results
           return;
         }
       }
@@ -404,7 +398,7 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8 relative z-10">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold text-foreground mb-2">
-            {polls.length > 0 ? `All Polls (${polls.length})` : "Active Polls"}
+            Active Polls
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Your vote remains encrypted until the poll closes. No one can see voting trends
