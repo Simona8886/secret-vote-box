@@ -77,14 +77,6 @@ const CreatePoll = () => {
       });
       return;
     }
-    if (filledOptions.length > 20) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Maximum 20 options allowed",
-      });
-      return;
-    }
 
     setLoading(true);
 
@@ -109,9 +101,9 @@ const CreatePoll = () => {
       // Validate and adjust expiration time
       const expireDate = new Date(expireAt);
       const now = new Date();
-      const minExpireTime = new Date(now.getTime() + 5 * 60 * 1000);
+      const minExpireTime = new Date(now.getTime() + 5 * 60 * 1000); // At least 5 minutes from now
       
-      if (expireDate.getTime() <= now.getTime()) {
+      if (expireDate <= now) {
         toast({
           variant: "destructive",
           title: "Invalid expiration time",
@@ -122,14 +114,9 @@ const CreatePoll = () => {
       }
       
       // Get current block timestamp from the blockchain to ensure accuracy
-      let currentBlockTimestamp = now.getTime();
-      try {
-        const blockNumber = await provider.getBlockNumber();
-        const block = await provider.getBlock(blockNumber);
-        currentBlockTimestamp = block ? Number(block.timestamp) * 1000 : now.getTime();
-      } catch (error) {
-        console.warn("Failed to get block timestamp, using local time:", error);
-      }
+      const blockNumber = await provider.getBlockNumber();
+      const block = await provider.getBlock(blockNumber);
+      const currentBlockTimestamp = block ? Number(block.timestamp) * 1000 : now.getTime();
       const expireTimestamp = Math.floor(expireDate.getTime() / 1000);
       const minExpireTimestamp = Math.floor(currentBlockTimestamp / 1000) + 300; // At least 5 minutes (300 seconds) from block time
       
@@ -158,7 +145,6 @@ const CreatePoll = () => {
       });
       
       navigate("/");
-      // Navigate to home page after successful poll creation
     } catch (error: any) {
       toast({
         variant: "destructive",
