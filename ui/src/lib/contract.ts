@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 // Note: These types will be generated after contract compilation
 // import { SecretVoteBox__factory, SecretVoteBox } from "../../../types/contracts";
-
+ 
 // Contract addresses for different networks
 const CONTRACT_ADDRESSES: Record<number, string> = {
   31337: "0x5FbDB2315678afecb367f032d93F642f64180aa3", // localhost (Hardhat)
@@ -24,7 +24,6 @@ export const NETWORK_CONFIG = {
 // Falls back to environment variable or localhost address if chainId is not found
 export function getContractAddress(chainId?: number): string {
   // If chainId is provided and exists in our mapping, use it
-  // Handle network-specific contract addresses correctly
   if (chainId && CONTRACT_ADDRESSES[chainId]) {
     return CONTRACT_ADDRESSES[chainId];
   }
@@ -197,9 +196,6 @@ export async function castVote(
           await contract.vote.staticCall(pollId, encryptedHandle, inputProof);
         } catch (staticCallError: any) {
           // Extract revert reason if available
-          if (staticCallError.code === 'UNPREDICTABLE_GAS_LIMIT') {
-            throw new Error("Transaction may fail. Please check poll status and try again.");
-          }
           if (staticCallError.reason) {
             throw new Error(staticCallError.reason);
           } else if (staticCallError.data?.message) {
@@ -294,7 +290,7 @@ export async function getAllPolls(provider: ethers.Provider, chainId?: number): 
     } catch (error: any) {
       // If getPollCount fails, the contract might not be properly deployed
       if (error.message?.includes("BAD_DATA") || error.message?.includes("could not decode")) {
-        throw new Error(`Contract at ${contractAddress} does not respond correctly. Please ensure the contract is deployed and the address is correct.`);
+        throw new Error(`Contract at ${CONTRACT_ADDRESS} does not respond correctly. Please ensure the contract is deployed and the address is correct.`);
       }
       throw error;
     }
