@@ -158,7 +158,6 @@ export async function initializeFHEVM(chainId?: number): Promise<FhevmInstance> 
       }
       
       throw new Error(errorMessage);
-    // Enhanced error handling for FHEVM initialization
     }
   }
   return fhevmInstance;
