@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { getAllPolls, hasUserVoted, type Poll } from "@/lib/contract";
 import { ethers } from "ethers";
-
+ 
 interface Vote {
   pollId: number;
   poll: Poll;
@@ -42,14 +42,12 @@ const MyVotes = () => {
       const allPolls = await getAllPolls(provider, chainId || undefined);
       
       const userVotes: Vote[] = [];
-      // Use Promise.all for parallel fetching to improve performance
-      const voteChecks = await Promise.all(
-        allPolls.map(async (poll) => {
-          const hasVotedResult = await hasUserVoted(provider, poll.id, address, chainId || undefined);
-          return hasVotedResult ? { pollId: poll.id, poll } : null;
-        })
-      );
-      userVotes.push(...voteChecks.filter((v): v is Vote => v !== null));
+      for (const poll of allPolls) {
+        const hasVotedResult = await hasUserVoted(provider, poll.id, address, chainId || undefined);
+        if (hasVotedResult) {
+          userVotes.push({ pollId: poll.id, poll });
+        }
+      }
 
       setVotes(userVotes);
     } catch (error: any) {
@@ -122,7 +120,7 @@ const MyVotes = () => {
                       <div className="flex items-center justify-between p-3 bg-primary/10 rounded-md border border-primary">
                         <span className="font-medium">Your Vote:</span>
                         <span className="text-primary font-semibold">
-                          {status === "active" ? "Vote submitted (encrypted)" : "Vote recorded"}
+                          Vote submitted (encrypted)
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground">
