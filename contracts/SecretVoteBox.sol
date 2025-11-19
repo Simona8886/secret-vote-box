@@ -49,6 +49,7 @@ contract SecretVoteBox is SepoliaConfig {
         require(options.length >= 2, "Must have at least 2 options");
         require(expireAt > block.timestamp, "Expiration must be in the future");
 
+        require(pollCount < type(uint256).max, "Maximum poll count reached");
         pollId = pollCount++;
         Poll storage poll = polls[pollId];
         poll.title = title;
