@@ -13,7 +13,7 @@ interface Vote {
   pollId: number;
   poll: Poll;
 }
-
+ 
 const MyVotes = () => {
   const { address, isConnected, chainId } = useAccount();
   const publicClient = usePublicClient();
