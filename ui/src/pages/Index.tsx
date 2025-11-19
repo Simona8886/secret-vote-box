@@ -9,7 +9,7 @@ import { getAllPolls, getEncryptedVoteCount, hasUserVoted, castVote, type Poll, 
 import { getFHEVMInstance, encryptOptionIndex } from "@/lib/fhevm";
 import { chains } from "@/lib/wagmi";
 import { ethers } from "ethers";
- 
+
 interface Vote {
   pollId: number;
   optionIndex: number;
