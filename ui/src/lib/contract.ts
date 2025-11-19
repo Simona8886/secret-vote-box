@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 // Note: These types will be generated after contract compilation
 // import { SecretVoteBox__factory, SecretVoteBox } from "../../../types/contracts";
- 
+
 // Contract addresses for different networks
 const CONTRACT_ADDRESSES: Record<number, string> = {
   31337: "0x5FbDB2315678afecb367f032d93F642f64180aa3", // localhost (Hardhat)
