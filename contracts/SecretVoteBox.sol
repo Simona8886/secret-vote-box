@@ -144,6 +144,7 @@ contract SecretVoteBox is SepoliaConfig {
     /// @param voter The address of the voter
     /// @return Whether the user has voted
     function hasVoted(uint256 pollId, address voter) external view returns (bool) {
+        require(pollId < pollCount, "Poll does not exist");
         return polls[pollId].hasVoted[voter];
     }
 
