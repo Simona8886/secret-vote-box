@@ -9,7 +9,7 @@ import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 /// @notice A voting system where votes are encrypted using FHEVM until polls close
 contract SecretVoteBox is SepoliaConfig {
     struct Poll {
-        string title;
+    string title;
         string description;
         string[] options;
         uint256 expireAt;
