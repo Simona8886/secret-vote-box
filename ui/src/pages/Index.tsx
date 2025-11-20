@@ -56,7 +56,7 @@ const Index = () => {
         provider = new ethers.JsonRpcProvider(rpcUrl);
       }
       const allPolls = await getAllPolls(provider, chainId || undefined);
-      setPolls(allPolls);
+      setPolls(allPolls || []);
       // Load results/finalization status for ended polls
       for (const p of allPolls) {
         const now = Date.now();
