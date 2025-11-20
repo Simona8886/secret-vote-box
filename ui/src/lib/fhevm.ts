@@ -1,7 +1,7 @@
 // FHEVM SDK utilities for frontend
 import { ethers } from "ethers";
 import { JsonRpcProvider } from "ethers";
-
+ 
 // Import @zama-fhe/relayer-sdk - use static import
 // Note: Vite config excludes this from optimization
 import { createInstance, initSDK, SepoliaConfig } from "@zama-fhe/relayer-sdk/bundle";
