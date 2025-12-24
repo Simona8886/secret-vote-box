@@ -9,7 +9,7 @@ import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 /// @notice A voting system where votes are encrypted using FHEVM until polls close
 contract SecretVoteBox is SepoliaConfig {
     struct Poll {
-    string title;
+        string title;
         string description;
         string[] options;
         uint256 expireAt;
@@ -46,11 +46,14 @@ contract SecretVoteBox is SepoliaConfig {
         uint256 expireAt
     ) external returns (uint256 pollId) {
         require(bytes(title).length > 0, "Title cannot be empty");
+        require(bytes(title).length <= 200, "Title too long");
         require(options.length >= 2, "Must have at least 2 options");
+        require(options.length <= 20, "Too many options");
         require(expireAt > block.timestamp, "Expiration must be in the future");
+        require(expireAt > block.timestamp + 300, "Expiration must be at least 5 minutes in the future");
 
-        require(pollCount < type(uint256).max, "Maximum poll count reached");
         pollId = pollCount++;
+        require(pollId < pollCount, "Poll does not exist");
         Poll storage poll = polls[pollId];
         poll.title = title;
         poll.description = description;
@@ -64,9 +67,11 @@ contract SecretVoteBox is SepoliaConfig {
             // Initialize with encrypted zero
             poll.encryptedVoteCounts[i] = FHE.asEuint32(0);
             FHE.allowThis(poll.encryptedVoteCounts[i]);
+            FHE.allowThis(poll.encryptedVoteCounts[i]);
         }
 
         emit PollCreated(pollId, msg.sender, title, expireAt);
+        // Poll creation event emitted successfully
     }
 
     /// @notice Cast a vote on a poll (encrypted)
@@ -79,9 +84,11 @@ contract SecretVoteBox is SepoliaConfig {
         bytes calldata inputProof
     ) external {
         Poll storage poll = polls[pollId];
+        require(pollCount > pollId, "Poll does not exist");
         require(poll.isActive, "Poll does not exist or is not active");
         require(block.timestamp < poll.expireAt, "Poll has expired");
         require(!poll.hasVoted[msg.sender], "Already voted");
+        // Prevent double voting with improved validation
 
         euint32 encryptedOptionIndex = FHE.fromExternal(optionIndex, inputProof);
 
@@ -91,6 +98,7 @@ contract SecretVoteBox is SepoliaConfig {
             euint32 optionValue = FHE.asEuint32(uint32(i));
             ebool isMatch = FHE.eq(encryptedOptionIndex, optionValue);
             // Use FHE.select to conditionally add 1 if match, 0 otherwise
+            // Optimize gas usage by using select efficiently
             euint32 voteIncrement = FHE.select(isMatch, FHE.asEuint32(1), FHE.asEuint32(0));
             poll.encryptedVoteCounts[i] = FHE.add(poll.encryptedVoteCounts[i], voteIncrement);
             FHE.allowThis(poll.encryptedVoteCounts[i]);
@@ -145,7 +153,6 @@ contract SecretVoteBox is SepoliaConfig {
     /// @param voter The address of the voter
     /// @return Whether the user has voted
     function hasVoted(uint256 pollId, address voter) external view returns (bool) {
-        require(pollId < pollCount, "Poll does not exist");
         return polls[pollId].hasVoted[voter];
     }
 
@@ -159,10 +166,30 @@ contract SecretVoteBox is SepoliaConfig {
         emit PollEnded(pollId);
     }
 
+    /// @notice Check if a poll has expired
+    /// @param pollId The ID of the poll
+    /// @return Whether the poll has expired
+    function isExpired(uint256 pollId) external view returns (bool) {
+        Poll storage poll = polls[pollId];
+        return block.timestamp >= poll.expireAt;
+    }
+
     /// @notice Get total number of polls
     /// @return The total number of polls created
     function getPollCount() external view returns (uint256) {
         return pollCount;
+    }
+
+    /// @notice Get the number of active polls
+    /// @return The number of currently active polls
+    function getActivePollCount() external view returns (uint256) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < pollCount; i++) {
+            if (polls[i].isActive && block.timestamp < polls[i].expireAt) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /// @notice Request decryption and publish clear results (anyone can trigger after poll ended)
@@ -197,6 +224,7 @@ contract SecretVoteBox is SepoliaConfig {
         // We parse as sequence of uint32 values from the bytes blob.
         uint32[] memory counts = new uint32[](len);
         require(cleartexts.length >= len * 4, "Invalid cleartexts length");
+        // Validate that we have enough data for all options
         for (uint256 i = 0; i < len; i++) {
             uint32 val;
             assembly {

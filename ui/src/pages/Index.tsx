@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useAccount, usePublicClient, useWalletClient, useSwitchChain } from "wagmi";
+import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import PollCard from "@/components/PollCard";
+import { FadeIn, StaggerContainer, StaggerItem } from "@/components/PageTransition";
 import backgroundPattern from "@/assets/background-pattern.png";
-import { Loader2 } from "lucide-react";
+import { Loader2, Vote, Shield, Sparkles } from "lucide-react";
 import { getAllPolls, getEncryptedVoteCount, hasUserVoted, castVote, type Poll, getContractAddress, isFinalized as isFinalizedOnChain, getClearVoteCounts, requestFinalize, endPollTx } from "@/lib/contract";
 import { getFHEVMInstance, encryptOptionIndex } from "@/lib/fhevm";
 import { chains } from "@/lib/wagmi";
@@ -44,12 +46,10 @@ const Index = () => {
     if (!publicClient) return;
 
     try {
-      // Prefer injected provider to avoid third-party RPCs (prevents 429/CORS)
       let provider: ethers.BrowserProvider | ethers.JsonRpcProvider;
       if (typeof window !== "undefined" && (window as any).ethereum) {
         provider = new ethers.BrowserProvider((window as any).ethereum, "any");
       } else {
-        // Fallback read-only RPC
         const rpcUrl = (chainId === 31337)
           ? "http://localhost:8545"
           : "https://rpc.sepolia.org";
@@ -57,7 +57,10 @@ const Index = () => {
       }
       const allPolls = await getAllPolls(provider, chainId || undefined);
       setPolls(allPolls || []);
-      // Load results/finalization status for ended polls
+      if (!allPolls || allPolls.length === 0) {
+        setLoading(false);
+        return;
+      }
       for (const p of allPolls) {
         const now = Date.now();
         const ended = Number(p.expireAt) * 1000 <= now || !p.isActive;
@@ -71,10 +74,7 @@ const Index = () => {
               const percentages = counts.map(c => total > 0 ? (c * 100) / total : 0);
               setResultsByPoll(prev => ({ ...prev, [p.id]: { counts, total, percentages } }));
             } else {
-              // Auto-request finalize when a poll has ended but results aren't published yet.
-              // Requires a connected wallet to submit the tx; if not connected, skip silently.
               if (isConnected && address && !(revealingByPoll[p.id])) {
-                // Fire and forget; UI will refresh on next fetch
                 handleRevealResults(p.id).catch(() => {});
               }
             }
@@ -82,6 +82,7 @@ const Index = () => {
         }
       }
     } catch (error: any) {
+      console.error("Error fetching polls:", error);
       toast({
         variant: "destructive",
         title: "Error loading polls",
@@ -111,14 +112,12 @@ const Index = () => {
         try { await provider.send("eth_requestAccounts", []); } catch { /* ignore */ }
       }
       const signer = await provider.getSigner();
-      // Ensure poll is ended on-chain before finalize (endPoll may revert if already ended; ignore)
       try {
         const endTx = await endPollTx(signer, pollId, chainId || undefined);
         await endTx.wait();
       } catch {}
       const tx = await requestFinalize(signer, pollId, chainId || undefined);
       await tx.wait();
-      // Poll finalization state a few times
       const readProvider = new ethers.BrowserProvider(publicClient as any);
       for (let i = 0; i < 10; i++) {
         await new Promise(r => setTimeout(r, 1500));
@@ -149,7 +148,6 @@ const Index = () => {
     if (!publicClient || !address) return;
 
     try {
-      // Use injected provider for read to avoid third-party RPC throttling
       let provider: ethers.BrowserProvider | ethers.JsonRpcProvider;
       if (typeof window !== "undefined" && (window as any).ethereum) {
         provider = new ethers.BrowserProvider((window as any).ethereum, "any");
@@ -196,7 +194,6 @@ const Index = () => {
       return;
     }
 
-    // Prevent voting on ended polls (extra guard in addition to contract check)
     try {
       const poll = polls.find(p => p.id === parseInt(pollId));
       if (poll) {
@@ -212,7 +209,6 @@ const Index = () => {
       }
     } catch {}
 
-    // Check if user has already voted before attempting to vote (using injected provider to avoid stale RPC)
     try {
       let readProvider: ethers.BrowserProvider | ethers.JsonRpcProvider;
       if (typeof window !== "undefined" && (window as any).ethereum) {
@@ -233,7 +229,6 @@ const Index = () => {
         return;
       }
     } catch (error) {
-      // Be conservative: if we cannot verify, ask the user to refresh instead of sending a likely-reverting tx
       console.warn("Failed to check if user has voted:", error);
       toast({
         variant: "destructive",
@@ -243,25 +238,22 @@ const Index = () => {
       return;
     }
 
-    // Check if contract is deployed on current network
     const contractAddress = getContractAddress(chainId || undefined);
     if (!contractAddress) {
       toast({
         variant: "destructive",
         title: "Contract not deployed",
-        description: `Contract is not deployed on this network (Chain ID: ${chainId}). Please switch to a supported network (localhost: 31337 or Sepolia: 11155111).`,
+        description: `Contract is not deployed on this network (Chain ID: ${chainId}). Please switch to a supported network.`,
       });
       return;
     }
 
     try {
-      // In production (Vercel), always use the injected EIP-1193 provider (window.ethereum)
       if (typeof window === "undefined" || !(window as any).ethereum) {
         throw new Error("No wallet provider detected. Please install or enable your wallet.");
       }
       const ethereum = (window as any).ethereum;
       const provider = new ethers.BrowserProvider(ethereum, "any");
-      // Ensure accounts are available (some wallets require explicit request)
       const accounts = await provider.listAccounts();
       if (accounts.length === 0) {
         try {
@@ -272,12 +264,10 @@ const Index = () => {
       }
       const signer = await provider.getSigner();
 
-      // Initialize FHEVM instance (use chainId instead of provider)
       console.log("Initializing FHEVM instance for voting...");
       const fhevm = await getFHEVMInstance(chainId);
       console.log("FHEVM instance initialized:", !!fhevm);
 
-      // Encrypt the option index
       toast({
         title: "Encrypting vote...",
         description: "Please wait while your vote is being encrypted.",
@@ -296,7 +286,6 @@ const Index = () => {
         inputProofLength: encryptedInput.inputProof.length,
       });
 
-      // Cast the encrypted vote
       toast({
         title: "Submitting vote...",
         description: "Please confirm the transaction in your wallet.",
@@ -328,13 +317,11 @@ const Index = () => {
         description: "Your encrypted vote has been recorded.",
       });
 
-      // Persist user selection locally for display (privacy-preserving)
       try {
         const storageKey = `svb:votes:${chainId || 0}:${address}:${parseInt(pollId)}`;
         localStorage.setItem(storageKey, String(optionIndex));
       } catch {}
 
-      // Refresh polls and votes
       await fetchPolls();
       if (address) {
         await fetchUserVotes();
@@ -375,8 +362,14 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="container mx-auto px-4 py-16 flex justify-center">
-          <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="container mx-auto px-4 py-16 flex flex-col items-center justify-center gap-4">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          >
+            <Loader2 className="h-10 w-10 text-primary" />
+          </motion.div>
+          <p className="text-muted-foreground">Loading polls...</p>
         </div>
       </div>
     );
@@ -384,70 +377,118 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div 
-        className="fixed inset-0 opacity-30 pointer-events-none"
-        style={{
-          backgroundImage: `url(${backgroundPattern})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      />
+      {/* Animated background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div 
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: `url(${backgroundPattern})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+        <motion.div
+          className="absolute -top-1/2 -left-1/2 w-full h-full rounded-full bg-gradient-to-br from-primary/20 to-transparent blur-3xl"
+          animate={{
+            x: [0, 100, 0],
+            y: [0, 50, 0],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.div
+          className="absolute -bottom-1/2 -right-1/2 w-full h-full rounded-full bg-gradient-to-tl from-accent/20 to-transparent blur-3xl"
+          animate={{
+            x: [0, -100, 0],
+            y: [0, -50, 0],
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+        />
+      </div>
       
       <Header />
       
       <main className="container mx-auto px-4 py-8 relative z-10">
-        <div className="mb-8 text-center">
-          <h2 className="text-3xl font-bold text-foreground mb-2">
-            Active Polls
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Your vote remains encrypted until the poll closes. No one can see voting trends
-            or pressure you based on current results. Vote freely, vote privately.
-          </p>
-        </div>
-
-        {!isConnected && (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground text-lg">
-              Please connect your wallet to view and participate in polls.
+        <FadeIn>
+          <div className="mb-8 text-center">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4"
+            >
+              <Shield className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">End-to-End Encrypted</span>
+            </motion.div>
+            
+            <h2 className="text-4xl font-bold mb-3">
+              <span className="bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_100%] bg-clip-text text-transparent animate-gradient">
+                {polls.length > 0 ? `All Polls (${polls.length})` : "Active Polls"}
+              </span>
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Your vote remains encrypted until the poll closes. No one can see voting trends
+              or pressure you based on current results. Vote freely, vote privately.
             </p>
           </div>
+        </FadeIn>
+
+        {!isConnected && (
+          <FadeIn delay={0.2}>
+            <motion.div 
+              className="text-center py-12 px-6 rounded-2xl bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/10"
+              whileHover={{ scale: 1.01 }}
+            >
+              <Vote className="h-12 w-12 text-primary mx-auto mb-4" />
+              <p className="text-lg font-medium mb-2">Connect Your Wallet</p>
+              <p className="text-muted-foreground">
+                Please connect your wallet to view and participate in polls.
+              </p>
+            </motion.div>
+          </FadeIn>
         )}
 
         {polls.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground text-lg">
-              No polls available yet. {isConnected && "Be the first to create one!"}
-            </p>
-          </div>
+          <FadeIn delay={0.2}>
+            <motion.div 
+              className="text-center py-16 px-6 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border"
+              whileHover={{ scale: 1.01 }}
+            >
+              <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-lg font-medium mb-2">No Polls Yet</p>
+              <p className="text-muted-foreground">
+                {isConnected ? "Be the first to create one!" : "Connect your wallet to create a poll."}
+              </p>
+            </motion.div>
+          </FadeIn>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" staggerDelay={0.1}>
             {polls.map((poll) => {
               const userVote = userVotes.find(v => v.pollId === poll.id);
               const status = getPollStatus(poll);
               const finalized = finalizedByPoll[poll.id] || false;
               const results = resultsByPoll[poll.id];
               return (
-                <PollCard
-                  key={poll.id}
-                  id={poll.id.toString()}
-                  question={poll.title}
-                  description={poll.description || undefined}
-                  options={poll.options.map((opt, idx) => ({ id: `option-${idx}`, text: opt }))}
-                  status={status as "active" | "ended"}
-                  timeRemaining={getTimeRemaining(poll.expireAt)}
-                  totalVotes={results?.total || 0}
-                  isEncrypted={status === "active"}
-                  userVote={userVote?.optionIndex}
-                  onVote={handleVote}
-                  finalized={finalized}
-                  results={results}
-                  onReveal={status === "ended" && !finalized ? () => handleRevealResults(poll.id) : undefined}
-                  revealing={!!revealingByPoll[poll.id]}
-                />
+                <StaggerItem key={poll.id}>
+                  <PollCard
+                    id={poll.id.toString()}
+                    question={poll.title}
+                    description={poll.description || undefined}
+                    options={poll.options.map((opt, idx) => ({ id: `option-${idx}`, text: opt }))}
+                    status={status as "active" | "ended"}
+                    timeRemaining={getTimeRemaining(poll.expireAt)}
+                    totalVotes={results?.total || 0}
+                    isEncrypted={status === "active"}
+                    userVote={userVote?.optionIndex}
+                    onVote={handleVote}
+                    finalized={finalized}
+                    results={results}
+                    onReveal={status === "ended" && !finalized ? () => handleRevealResults(poll.id) : undefined}
+                    revealing={!!revealingByPoll[poll.id]}
+                  />
+                </StaggerItem>
               );
             })}
-          </div>
+          </StaggerContainer>
         )}
       </main>
     </div>

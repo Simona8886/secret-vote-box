@@ -1,0 +1,4 @@
+﻿1d1a106|Simona8886|SusanEvanotqln@outlook.com|2025-11-11 03:27:43|feat: implement poll creation, voting pages and FHEVM integration
+9922d21|Simona8886|SusanEvanotqln@outlook.com|2025-11-11 01:43:21|feat: initialize React frontend with Vite and Tailwind
+8f87c02|Sylvia452|SidneyGardinerdyajf@outlook.com|2025-11-10 22:26:00|feat: add deployment scripts and test files
+3acdc64|Sylvia452|SidneyGardinerdyajf@outlook.com|2025-11-10 19:54:36|feat: add SecretVoteBox contract with FHEVM integration

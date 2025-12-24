@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "framer-motion": "^11.15.0",
     "ethers": "^6.15.0",
     "@fhevm/mock-utils": "^0.1.0",
     "@fhevm/sdk": "^0.7.0-20",

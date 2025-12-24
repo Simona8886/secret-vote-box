@@ -9,6 +9,7 @@ import { config } from "@/lib/wagmi";
 import Index from "./pages/Index";
 import CreatePoll from "./pages/CreatePoll";
 import MyVotes from "./pages/MyVotes";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import "@rainbow-me/rainbowkit/styles.css";
 
@@ -26,7 +27,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/create-poll" element={<CreatePoll />} />
               <Route path="/my-votes" element={<MyVotes />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

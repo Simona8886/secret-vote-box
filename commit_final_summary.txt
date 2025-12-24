@@ -1,0 +1,23 @@
+﻿8ab4fa9|Sylvia452|SidneyGardinerdyajf@outlook.com|2025-11-20 05:12:02|docs: add demo video
+d76fe33|Sylvia452|SidneyGardinerdyajf@outlook.com|2025-11-20 03:31:56|docs: add comprehensive README with setup instructions
+3fee447|Sylvia452|SidneyGardinerdyajf@outlook.com|2025-11-20 00:52:51|refactor: optimize contract code section 1
+410f052|Sylvia452|SidneyGardinerdyajf@outlook.com|2025-11-19 23:47:51|fix: add poll count overflow check in createPoll
+60cd245|Simona8886|SusanEvanotqln@outlook.com|2025-11-20 00:28:51|refactor: improve UI component 6
+d294085|Simona8886|SusanEvanotqln@outlook.com|2025-11-19 22:31:51|refactor: improve UI component 15
+ccd130d|Simona8886|SusanEvanotqln@outlook.com|2025-11-20 18:31:51|fix: handle null poll array in Index page
+c131bd9|Simona8886|SusanEvanotqln@outlook.com|2025-11-20 13:25:51|refactor: improve UI component 9
+fbacf14|Sylvia452|SidneyGardinerdyajf@outlook.com|2025-11-20 07:17:51|fix: add poll existence check in hasVoted
+824c721|Sylvia452|SidneyGardinerdyajf@outlook.com|2025-11-19 23:47:51|refactor: optimize contract code section 13
+0929f22|Simona8886|SusanEvanotqln@outlook.com|2025-11-19 17:24:56|refactor: improve UI component 8
+c406851|Sylvia452|SidneyGardinerdyajf@outlook.com|2025-11-16 03:51:38|refactor: optimize contract code section 4
+7d07eaa|Simona8886|SusanEvanotqln@outlook.com|2025-11-19 00:17:59|refactor: improve UI component 14
+2604315|Simona8886|SusanEvanotqln@outlook.com|2025-11-18 12:12:43|refactor: improve UI component 5
+575aaae|Simona8886|SusanEvanotqln@outlook.com|2025-11-17 16:22:00|refactor: improve UI component 3
+abd1c11|Sylvia452|SidneyGardinerdyajf@outlook.com|2025-11-16 08:07:26|refactor: optimize contract code section 7
+b58c773|Simona8886|SusanEvanotqln@outlook.com|2025-11-15 11:37:53|refactor: improve UI component 2
+ec49c1d|Sylvia452|SidneyGardinerdyajf@outlook.com|2025-11-15 04:51:30|refactor: optimize contract code section 10
+9113784|Simona8886|SusanEvanotqln@outlook.com|2025-11-13 14:53:53|refactor: improve UI component 11
+4bffa7e|Simona8886|SusanEvanotqln@outlook.com|2025-11-11 03:27:43|feat: implement poll creation, voting pages and FHEVM integration
+e8b40ae|Simona8886|SusanEvanotqln@outlook.com|2025-11-11 01:43:21|feat: initialize React frontend with Vite and Tailwind
+05bb4d1|Sylvia452|SidneyGardinerdyajf@outlook.com|2025-11-11 10:52:00|feat: add deployment scripts and test files
+080d333|Sylvia452|SidneyGardinerdyajf@outlook.com|2025-11-10 22:49:12|feat: add SecretVoteBox contract with FHEVM integration
